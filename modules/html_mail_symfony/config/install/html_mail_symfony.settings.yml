@@ -1,0 +1,4 @@
+# Modules whose messages get the html_mail template even without html_mail
+# hints. '*' means every module. Messages with hints always get it.
+modules:
+  - user

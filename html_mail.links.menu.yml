@@ -1,0 +1,5 @@
+html_mail.settings:
+  title: 'HTML Mail'
+  description: 'Branding, colors and the site URL for outgoing HTML email; send a test message.'
+  route_name: html_mail.settings
+  parent: system.admin_config_system

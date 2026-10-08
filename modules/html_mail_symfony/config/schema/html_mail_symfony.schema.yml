@@ -1,0 +1,10 @@
+html_mail_symfony.settings:
+  type: config_object
+  label: 'HTML Mail: Symfony Mailer settings'
+  mapping:
+    modules:
+      type: sequence
+      label: 'Modules whose messages always get the template'
+      sequence:
+        type: string
+        label: 'Module name, or * for all'

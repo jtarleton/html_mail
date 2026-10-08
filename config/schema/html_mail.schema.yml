@@ -1,0 +1,56 @@
+html_mail.settings:
+  type: config_object
+  label: 'HTML Mail settings'
+  mapping:
+    site_url:
+      type: string
+      label: 'Absolute base URL for links and images in emails'
+    theme:
+      type: string
+      label: 'Theme that renders the email template'
+    brand_name:
+      type: label
+      label: 'Name shown in emails'
+    logo_url:
+      type: string
+      label: 'Logo URL or path'
+    logo_width:
+      type: integer
+      label: 'Logo width in pixels'
+    font_family:
+      type: string
+      label: 'Font stack'
+    colors:
+      type: mapping
+      label: 'Colors'
+      mapping:
+        text:
+          type: color_hex
+          label: 'Text'
+        muted:
+          type: color_hex
+          label: 'Secondary text'
+        accent:
+          type: color_hex
+          label: 'Accent (links, buttons)'
+        accent_text:
+          type: color_hex
+          label: 'Button text'
+        background:
+          type: color_hex
+          label: 'Page background'
+        surface:
+          type: color_hex
+          label: 'Card background'
+        panel:
+          type: color_hex
+          label: 'Callout and code background'
+        border:
+          type: color_hex
+          label: 'Borders'
+        badge:
+          type: color_hex
+          label: 'Badge background'
+    footer:
+      type: text
+      label: 'Default footer HTML'

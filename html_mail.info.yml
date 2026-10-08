@@ -1,0 +1,6 @@
+name: 'HTML Mail'
+type: module
+description: 'Sends email as HTML from one themeable template (html-mail.html.twig), with a plain-text alternative.'
+package: Mail
+core_version_requirement: ^10.3 || ^11
+configure: html_mail.settings

@@ -1,0 +1,4 @@
+administer html_mail:
+  title: 'Administer HTML Mail'
+  description: 'Change the look of outgoing email and send test messages.'
+  restrict access: true

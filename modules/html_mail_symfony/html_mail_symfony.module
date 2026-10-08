@@ -1,0 +1,111 @@
+<?php
+
+/**
+ * @file
+ * Sends the html_mail template through Drupal Symfony Mailer.
+ *
+ * With symfony_mailer, core's mail plugins (system.mail:interface) are never
+ * used: every hook_mail() message goes through its LegacyEmailBuilder, which
+ * keeps only the subject and body, wraps the body in email-wrap.html.twig and
+ * drops the html_mail hints. So the finished message is kept from
+ * hook_mail_alter() and, once symfony_mailer has rendered, rebuilt with the
+ * html_mail template in place of its own HTML and text.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\symfony_mailer\EmailInterface;
+
+/**
+ * Messages waiting for their HTML, keyed by message ID (module_key).
+ *
+ * The hook_mail_alter() implementation and the post-render step run in the
+ * same send, one message at a time.
+ */
+function &_html_mail_symfony_pending(): array {
+  $pending = &drupal_static(__FUNCTION__, []);
+  return $pending;
+}
+
+/**
+ * Implements hook_mail_alter().
+ */
+function html_mail_symfony_mail_alter(array &$message): void {
+  if (empty($message['html_mail']) && empty($message['params']['html_mail'])
+    && !_html_mail_symfony_module_applies($message['module'] ?? '')) {
+    return;
+  }
+  _html_mail_symfony_pending()[$message['id']] = $message;
+}
+
+/**
+ * Whether a module's messages get the template even without hints.
+ *
+ * Set in html_mail_symfony.settings:modules ('*' for every module).
+ */
+function _html_mail_symfony_module_applies(string $module): bool {
+  $modules = (array) \Drupal::config('html_mail_symfony.settings')->get('modules');
+  return in_array('*', $modules, TRUE) || in_array($module, $modules, TRUE);
+}
+
+/**
+ * Implements hook_mailer_init().
+ */
+function html_mail_symfony_mailer_init(EmailInterface $email): void {
+  if ($email->getParam('legacy_message') === NULL) {
+    return;
+  }
+  // Weight 1000: after symfony_mailer's own wrapping (800) and CSS inlining
+  // (900), so this has the last word on both bodies.
+  $email->addCallback('_html_mail_symfony_post_render', EmailInterface::PHASE_POST_RENDER, 1000, 'html_mail_symfony');
+}
+
+/**
+ * Post-render: replaces the bodies with the html_mail template's.
+ */
+function _html_mail_symfony_post_render(EmailInterface $email): void {
+  $id = $email->getParam('legacy_message')['id'] ?? NULL;
+  $pending = &_html_mail_symfony_pending();
+  if ($id === NULL || !isset($pending[$id])) {
+    return;
+  }
+  $message = $pending[$id];
+  unset($pending[$id]);
+
+  $built = \Drupal::service('html_mail.renderer')->build($message);
+  $email->setHtmlBody($built['html']);
+  $email->setTextBody($built['text']);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for html_mail_settings.
+ */
+function html_mail_symfony_form_html_mail_settings_alter(array &$form, FormStateInterface $form_state): void {
+  $modules = (array) \Drupal::config('html_mail_symfony.settings')->get('modules');
+  $form['symfony_mailer'] = [
+    '#type' => 'details',
+    '#title' => t('Symfony Mailer'),
+    '#open' => TRUE,
+    '#weight' => 5,
+  ];
+  $form['symfony_mailer']['html_mail_symfony_modules'] = [
+    '#type' => 'textarea',
+    '#title' => t('Modules whose email always uses the template'),
+    '#default_value' => implode("\n", $modules),
+    '#rows' => 3,
+    '#description' => t("Machine names, one per line, e.g. <code>user</code> for core account emails. <code>*</code> means every module. Messages with <code>html_mail</code> hints always use the template; other messages keep Symfony Mailer's own wrapping."),
+  ];
+  $form['#submit'][] = '_html_mail_symfony_settings_submit';
+}
+
+/**
+ * Submit handler for the html_mail_symfony part of the settings form.
+ */
+function _html_mail_symfony_settings_submit(array &$form, FormStateInterface $form_state): void {
+  $lines = preg_split('/[\s,]+/', (string) $form_state->getValue('html_mail_symfony_modules')) ?: [];
+  $modules = array_values(array_unique(array_filter(array_map('trim', $lines), static fn (string $m): bool => $m === '*' || (bool) preg_match('/^[a-z0-9_]+$/', $m))));
+  \Drupal::configFactory()->getEditable('html_mail_symfony.settings')
+    ->set('modules', $modules)
+    ->save();
+}

@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * @file
+ * One themeable HTML template for outgoing email.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function html_mail_help(string $route_name, RouteMatchInterface $route_match): string {
+  if ($route_name === 'help.page.html_mail' || $route_name === 'html_mail.settings') {
+    $text = '<p>' . t('HTML Mail sends email as HTML from one template, <code>html-mail.html.twig</code>, with a plain-text alternative. The settings below brand the default template; a theme can replace it entirely by overriding the template.') . '</p>';
+    if ($route_name === 'help.page.html_mail') {
+      $text .= '<p>' . t('Enable a transport submodule too: <em>HTML Mail: Symfony Mailer</em> or <em>HTML Mail: Amazon SES</em>. See the README for the hints a sending module can add to its messages.') . '</p>';
+    }
+    return $text;
+  }
+  return '';
+}
+
+/**
+ * Implements hook_mail().
+ *
+ * The 'test' message sent from the settings page.
+ */
+function html_mail_mail(string $key, array &$message, array $params): void {
+  if ($key !== 'test') {
+    return;
+  }
+  $options = ['langcode' => $message['langcode']];
+  $site = \Drupal::service('html_mail.renderer')->siteUrl();
+  $message['subject'] = t('HTML Mail test message', [], $options);
+  $message['body'][] = t('This is a test message from HTML Mail. If it shows a heading, a code and a button, HTML email works on this site.', [], $options);
+  $message['body'][] = $site;
+  $message['body'][] = t('The rest of a message follows the button.', [], $options);
+  $message['html_mail'] = [
+    'eyebrow' => t('Test', [], $options),
+    'heading' => t('HTML email works', [], $options),
+    'code' => '123456',
+    'button' => ['label' => t('Visit the site', [], $options), 'url' => $site],
+    'callout' => [
+      'eyebrow' => t('Example', [], $options),
+      'label' => t('A summary card', [], $options),
+      'value' => '42',
+      'rows' => [
+        ['label' => t('A row', [], $options), 'value' => '1', 'badge' => t('New', [], $options)],
+        ['label' => t('Another row', [], $options), 'value' => '2', 'note' => t('with a note', [], $options)],
+      ],
+    ],
+    'notice' => t('You received this because someone sent a test message from the HTML Mail settings page.', [], $options),
+  ];
+}
+
+/**
+ * Implements hook_theme().
+ *
+ * Variables (all optional except body/subject; see README.md):
+ * - subject, preheader, langcode, site_url
+ * - site_name: html_mail.settings:brand_name, or the site name
+ * - logo_url, logo_width: the logo from html_mail.settings (absolute URL)
+ * - style: html_mail.settings colors and font: font, text, muted, accent,
+ *   accent_text, background, surface, panel, border, badge
+ * - eyebrow: a short line above everything (e.g. a date)
+ * - greeting, heading
+ * - callout: a summary card: ['eyebrow', 'label', 'value', 'note',
+ *   'rows' => [['label', 'value', 'badge', 'note'], ...]]
+ * - code: a one-time code, shown large
+ * - body: the message, as safe HTML of plain tags (p, h2, h3, ul, ol, li,
+ *   strong, em, a, br); style it with the |mail_style filter
+ * - body_after: more of the message, shown after the button (the renderer
+ *   splits a plain-text body where the button's link stood on its own line)
+ * - button, secondary_button: ['label', 'url']
+ * - fallback_url: shown under the button as a copyable link
+ * - notice: small print under the content
+ * - footer: why the email was sent, as safe HTML (default:
+ *   html_mail.settings:footer)
+ * - unsubscribe_url.
+ */
+function html_mail_theme(): array {
+  return [
+    'html_mail' => [
+      'variables' => [
+        'subject' => '',
+        'preheader' => '',
+        'langcode' => 'en',
+        'site_name' => '',
+        'site_url' => '',
+        'logo_url' => '',
+        'logo_width' => 160,
+        'style' => [],
+        'eyebrow' => '',
+        'greeting' => '',
+        'heading' => '',
+        'callout' => NULL,
+        'code' => '',
+        'body' => '',
+        'body_after' => '',
+        'button' => NULL,
+        'secondary_button' => NULL,
+        'fallback_url' => '',
+        'notice' => '',
+        'footer' => '',
+        'unsubscribe_url' => '',
+      ],
+    ],
+  ];
+}

@@ -1,0 +1,10 @@
+services:
+  html_mail.renderer:
+    class: Drupal\html_mail\HtmlMailRenderer
+    arguments: ['@renderer', '@theme.manager', '@theme.initialization', '@config.factory', '@request_stack', '@theme_handler']
+  Drupal\html_mail\HtmlMailRenderer: '@html_mail.renderer'
+
+  html_mail.twig_extension:
+    class: Drupal\html_mail\Twig\MailStyleExtension
+    tags:
+      - { name: twig.extension }

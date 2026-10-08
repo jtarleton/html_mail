@@ -1,0 +1,95 @@
+{#
+/**
+ * @file
+ * Default HTML email: works for any site. Its name, logo, colors, font and
+ * footer come from the HTML Mail settings page (the style and logo_url
+ * variables). For more than that, a theme overrides this file (copy it to the
+ * theme's templates/ folder).
+ *
+ * Email clients ignore most CSS, so styles are inline; the body's plain tags
+ * get theirs from the |mail_style filter.
+ *
+ * Variables: see html_mail_theme().
+ */
+#}
+{% set font = 'font-family:' ~ (style.font|default("-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif")) ~ ';' %}
+{% set ink = style.text|default('#1f2328') %}
+{% set muted = style.muted|default('#59636e') %}
+{% set accent = style.accent|default('#0b5cad') %}
+{% set accent_text = style.accent_text|default('#ffffff') %}
+{% set page = style.background|default('#f3f4f6') %}
+{% set surface = style.surface|default('#ffffff') %}
+{% set panel = style.panel|default('#f6f8fa') %}
+{% set line = style.border|default('#e5e7eb') %}
+{% set badge = style.badge|default('#1a7f37') %}
+<!doctype html>
+<html lang="{{ langcode }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background:{{ page }};">
+{% if preheader %}<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{{ preheader }}&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>{% endif %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ page }};"><tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:{{ surface }};border-radius:12px;border:1px solid {{ line }};">
+  <tr><td style="{{ font }}padding:24px 28px 0;font-size:18px;font-weight:700;color:{{ ink }};">
+    <a href="{{ site_url }}" style="color:{{ ink }};text-decoration:none;">{% if logo_url %}<img src="{{ logo_url }}" width="{{ logo_width }}" alt="{{ site_name }}" style="display:block;border:0;max-width:100%;height:auto;">{% else %}{{ site_name }}{% endif %}</a>
+    {% if eyebrow %}<div style="margin-top:6px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:{{ muted }};">{{ eyebrow }}</div>{% endif %}
+  </td></tr>
+  <tr><td style="{{ font }}padding:20px 28px 8px;color:{{ ink }};">
+    {% if greeting %}<p style="margin:0 0 16px;font-size:16px;">{{ greeting }}</p>{% endif %}
+    {% if heading %}<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:{{ ink }};">{{ heading }}</h1>{% endif %}
+
+    {% if callout %}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:{{ panel }};border-radius:10px;border-left:4px solid {{ accent }};"><tr><td style="padding:14px 16px;">
+      {% if callout.eyebrow %}<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ muted }};">{{ callout.eyebrow }}</div>{% endif %}
+      {% if callout.label %}<div style="margin-top:2px;font-size:13px;color:{{ muted }};">{{ callout.label }}</div>{% endif %}
+      {% if callout.value %}<div style="font-size:28px;font-weight:800;line-height:1.2;color:{{ ink }};">{{ callout.value }}</div>{% endif %}
+      {% if callout.note %}<div style="margin:2px 0 8px;font-size:14px;color:{{ muted }};">{{ callout.note }}</div>{% endif %}
+      {% if callout.rows %}<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        {% for row in callout.rows %}<tr>
+          <td style="padding:6px 0;border-top:1px solid {{ line }};font-size:14px;"><strong>{{ row.label }}</strong>{% if row.badge %} <span style="padding:1px 7px;border-radius:999px;background:{{ badge }};color:#ffffff;font-size:11px;font-weight:700;">{{ row.badge }}</span>{% endif %}{% if row.note %} <span style="color:{{ muted }};font-size:13px;">· {{ row.note }}</span>{% endif %}</td>
+          <td align="right" style="padding:6px 0;border-top:1px solid {{ line }};font-size:14px;font-weight:700;white-space:nowrap;">{{ row.value }}</td>
+        </tr>{% endfor %}
+      </table>{% endif %}
+    </td></tr></table>
+    {% endif %}
+
+    {% if code %}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td style="padding:14px 22px;background:{{ panel }};border:1px solid {{ line }};border-radius:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:{{ ink }};-webkit-user-select:all;user-select:all;">{{ code }}</td></tr></table>
+    {% endif %}
+
+    {% set body_styles = {
+      'p': font ~ 'margin:0 0 14px;font-size:16px;line-height:1.6;color:' ~ ink ~ ';',
+      'h2': font ~ 'margin:22px 0 8px;font-size:18px;line-height:1.3;color:' ~ ink ~ ';',
+      'h3': font ~ 'margin:18px 0 6px;font-size:16px;color:' ~ ink ~ ';',
+      'ul': font ~ 'margin:0 0 14px;padding:0 0 0 22px;font-size:16px;line-height:1.6;color:' ~ ink ~ ';',
+      'ol': font ~ 'margin:0 0 14px;padding:0 0 0 22px;font-size:16px;line-height:1.6;color:' ~ ink ~ ';',
+      'li': 'margin:0 0 6px;',
+      'a': 'color:' ~ accent ~ ';',
+    } %}
+    {{ body|mail_style(body_styles) }}
+
+    {% if button %}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 16px;"><tr>
+      <td style="border-radius:8px;background:{{ accent }};"><a href="{{ button.url }}" style="{{ font }}display:inline-block;padding:12px 22px;font-size:16px;font-weight:700;color:{{ accent_text }};text-decoration:none;">{{ button.label }}</a></td>
+      {% if secondary_button %}<td style="width:10px;"></td><td style="border-radius:8px;border:1px solid {{ line }};"><a href="{{ secondary_button.url }}" style="{{ font }}display:inline-block;padding:11px 20px;font-size:16px;font-weight:600;color:{{ ink }};text-decoration:none;">{{ secondary_button.label }}</a></td>{% endif %}
+    </tr></table>
+    {% endif %}
+    {% if fallback_url %}
+    <p style="{{ font }}margin:0 0 16px;font-size:13px;line-height:1.5;color:{{ muted }};">{{ 'Button not working? Copy and paste this link:'|t }}<br><a href="{{ fallback_url }}" style="color:{{ accent }};word-break:break-all;">{{ fallback_url }}</a></p>
+    {% endif %}
+    {{ body_after|mail_style(body_styles) }}
+    {% if notice %}<p style="{{ font }}margin:16px 0 8px;font-size:13px;line-height:1.5;color:{{ muted }};">{{ notice }}</p>{% endif %}
+  </td></tr>
+  <tr><td style="{{ font }}padding:16px 28px 24px;border-top:1px solid {{ line }};font-size:12px;line-height:1.6;color:{{ muted }};">
+    {% if footer %}{{ footer|mail_style({'a': 'color:' ~ muted ~ ';'}) }}<br>{% endif %}
+    {% if unsubscribe_url %}<a href="{{ unsubscribe_url }}" style="color:{{ muted }};">{{ 'Unsubscribe'|t }}</a> · {% endif %}<a href="{{ site_url }}" style="color:{{ muted }};">{{ site_name }}</a>
+  </td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>

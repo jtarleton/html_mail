@@ -1,0 +1,30 @@
+{
+    "name": "drupal/html_mail",
+    "description": "Sends Drupal email as HTML from one themeable template, with a plain-text alternative. Works with Drupal Symfony Mailer and Amazon SES.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "keywords": [
+        "Drupal",
+        "email",
+        "html mail",
+        "symfony mailer",
+        "amazon ses"
+    ],
+    "homepage": "https://www.drupal.org/project/html_mail",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/html_mail",
+        "source": "https://git.drupalcode.org/project/html_mail"
+    },
+    "require": {
+        "php": ">=8.1",
+        "drupal/core": "^10.3 || ^11"
+    },
+    "suggest": {
+        "drupal/symfony_mailer": "Send through Drupal Symfony Mailer (enable html_mail_symfony).",
+        "drupal/amazon_ses": "Send through Amazon SES (enable html_mail_ses)."
+    },
+    "require-dev": {
+        "drupal/amazon_ses": "^3.1",
+        "drupal/symfony_mailer": "^1.5 || ^2"
+    }
+}
