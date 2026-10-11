@@ -1,0 +1,9 @@
+# PHPStan configuration, used by the GitLab CI phpstan job.
+parameters:
+  level: 8
+  treatPhpDocTypesAsCertain: false
+  ignoreErrors:
+    # Arrays follow Drupal's render and mail array conventions.
+    - identifier: missingType.iterableValue
+    # new static() is the standard Drupal create() pattern.
+    - identifier: new.static

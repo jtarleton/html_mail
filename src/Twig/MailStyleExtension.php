@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\html_mail\Twig;
 
+use Drupal\Component\Render\MarkupInterface;
 use Drupal\Core\Render\Markup;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
@@ -39,10 +40,10 @@ class MailStyleExtension extends AbstractExtension {
    * @param array $styles
    *   Tag name => inline CSS.
    *
-   * @return \Drupal\Core\Render\Markup|string
+   * @return \Drupal\Component\Render\MarkupInterface|string
    *   Markup; an empty string stays a string (Markup::create('') returns '').
    */
-  public function style($html, array $styles): Markup|string {
+  public function style(mixed $html, array $styles): MarkupInterface|string {
     $html = (string) $html;
     if ($html === '') {
       return '';

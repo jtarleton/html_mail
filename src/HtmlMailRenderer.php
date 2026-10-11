@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\html_mail;
 
+use Drupal\Component\Render\MarkupInterface;
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Component\Utility\Xss;
@@ -65,6 +66,16 @@ class HtmlMailRenderer {
   public const DEFAULT_FONT = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
   /**
+   * The tags kept in an HTML body or footer hint.
+   */
+  public const ALLOWED_TAGS = ['p', 'h2', 'h3', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i', 'a', 'br'];
+
+  /**
+   * The hints that are URLs.
+   */
+  protected const URL_HINTS = ['fallback_url', 'unsubscribe_url'];
+
+  /**
    * The absolute base URL for links and images.
    */
   public function siteUrl(): string {
@@ -102,7 +113,7 @@ class HtmlMailRenderer {
     }
     return [
       'site_name' => $name !== '' ? $name : (string) $this->configFactory->get('system.site')->get('name'),
-      'logo_url' => $logo,
+      'logo_url' => $logo !== '' ? UrlHelper::stripDangerousProtocols($logo) : '',
       'logo_width' => (int) ($settings->get('logo_width') ?: 160),
       'style' => [
         'font' => (string) ($settings->get('font_family') ?: self::DEFAULT_FONT),
@@ -142,9 +153,19 @@ class HtmlMailRenderer {
         $variables[$key] = (string) $hints[$key];
       }
     }
+    foreach (self::URL_HINTS as $key) {
+      if (isset($variables[$key])) {
+        $variables[$key] = UrlHelper::stripDangerousProtocols($variables[$key]);
+      }
+    }
     foreach (['button', 'secondary_button', 'callout'] as $key) {
       if (!empty($hints[$key]) && is_array($hints[$key])) {
         $variables[$key] = $hints[$key];
+      }
+    }
+    foreach (['button', 'secondary_button'] as $key) {
+      if (isset($variables[$key]['url'])) {
+        $variables[$key]['url'] = UrlHelper::stripDangerousProtocols((string) $variables[$key]['url']);
       }
     }
     if (isset($hints['footer'])) {
@@ -164,7 +185,7 @@ class HtmlMailRenderer {
       // Where the plain text has the button's link on a line of its own, the
       // button goes there: the text before it is 'body', after it
       // 'body_after'.
-      $buttonUrl = $hints['button']['url'] ?? NULL;
+      $buttonUrl = isset($hints['button']['url']) ? (string) $hints['button']['url'] : NULL;
       $skip = array_filter([$hints['fallback_url'] ?? NULL]);
       $html = ['', ''];
       $part = 0;
@@ -184,7 +205,7 @@ class HtmlMailRenderer {
       $variables['body_after'] = Markup::create($html[1]);
     }
     if (empty($variables['preheader'])) {
-      $variables['preheader'] = mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags((string) $variables['body']))), 0, 140);
+      $variables['preheader'] = mb_substr(trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $variables['body']))), 0, 140);
     }
 
     $build = ['#theme' => 'html_mail'];
@@ -197,7 +218,7 @@ class HtmlMailRenderer {
   /**
    * The body as a list of plain-text paragraphs.
    */
-  protected function paragraphs($body): array {
+  protected function paragraphs(mixed $body): array {
     $body = is_array($body) ? $body : [$body];
     $out = [];
     foreach ($body as $part) {
@@ -221,10 +242,13 @@ class HtmlMailRenderer {
   }
 
   /**
-   * A hint given as HTML: trusted (it comes from code), passed through as is.
+   * A hint given as HTML, filtered down to the allowed tags.
+   *
+   * Hints usually come from code, but a sending module may build them from
+   * user input (a contact form, a comment), so they are never trusted as is.
    */
-  protected function markup($value): Markup {
-    return Markup::create((string) $value);
+  protected function markup(mixed $value): MarkupInterface|string {
+    return Markup::create(Xss::filter((string) $value, self::ALLOWED_TAGS));
   }
 
   /**

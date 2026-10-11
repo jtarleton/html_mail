@@ -1,4 +1,4 @@
-# HTML Mail
+# Magic HTML Mail
 
 Sends Drupal email as HTML from **one themeable template**, with a plain-text
 alternative. Any module's `hook_mail()` message gets a clean, responsive HTML
@@ -15,16 +15,17 @@ add a heading, a one-time code, a button or a summary card.
 - [Configuration](#configuration)
 - [For sending modules](#for-sending-modules)
 - [For themes](#for-themes)
+- [Similar modules](#similar-modules)
 
 ## Requirements
 
 Drupal 10.3 or 11. A transport, through one of the submodules:
 
-- **HTML Mail: Symfony Mailer** (`html_mail_symfony`) needs
+- **Magic HTML Mail: Symfony Mailer** (`html_mail_symfony`) needs
   [Drupal Symfony Mailer](https://www.drupal.org/project/symfony_mailer) 1.5+
   set to replace the mail manager (in 2.x, enable its `mailer_override`
   submodule).
-- **HTML Mail: Amazon SES** (`html_mail_ses`) needs
+- **Magic HTML Mail: Amazon SES** (`html_mail_ses`) needs
   [Amazon SES](https://www.drupal.org/project/amazon_ses).
 
 ## Installation
@@ -38,8 +39,8 @@ See [Installing Drupal modules](https://www.drupal.org/docs/extending-drupal/ins
 
 ## Configuration
 
-Go to **Configuration » System » HTML Mail**
-(`/admin/config/system/html-mail`, permission *Administer HTML Mail*):
+Go to **Configuration » System » Magic HTML Mail**
+(`/admin/config/system/html-mail`, permission *Administer Magic HTML Mail*):
 
 | Setting | What it does |
 |---|---|
@@ -81,8 +82,12 @@ clickable). Optionally add hints under `$message['html_mail']` (or
 | `button`, `secondary_button` | `['label' => ..., 'url' => ...]`; the button goes where its URL stood on its own line in the text |
 | `fallback_url` | "Button not working? Copy this link" |
 | `callout` | a summary card: `eyebrow`, `label`, `value`, `note`, `rows` (`label`, `value`, `badge`, `note`) |
-| `body` | the HTML body itself (plain tags: p, h2, h3, ul, ol, li, strong, em, a) instead of the text |
+| `body` | the HTML body itself instead of the text |
 | `notice`, `footer`, `unsubscribe_url` | small print, why the email was sent (HTML), an unsubscribe link |
+
+The `body` and `footer` hints are filtered down to plain tags (p, h2, h3, ul,
+ol, li, strong, em, b, i, a, br), and URLs with a dangerous protocol (such as
+`javascript:`) are dropped, so hints built from user input are safe.
 
 ```php
 function mymodule_mail($key, &$message, $params) {
@@ -110,3 +115,17 @@ CSS); style the body's plain tags with the
 
 The template is always rendered in the mail theme, even when mail is sent
 from an admin page, drush or cron, so the override applies everywhere.
+
+## Similar modules
+
+- [HTML Mail](https://www.drupal.org/project/htmlmail) (`htmlmail`) themes
+  mail per module and key through Mail System, and has its own mail plugin
+  that wraps PHP mail. Magic HTML Mail uses a single template that any theme
+  can override, adds optional hints (heading, code, button, summary card)
+  for sending modules, and sends through Symfony Mailer or Amazon SES.
+- [Mime Mail](https://www.drupal.org/project/mimemail) builds MIME messages
+  with attachments and embedded images, and works through Mail System. Magic
+  HTML Mail adds no attachments, and leaves MIME building to the transport.
+- [Drupal Symfony Mailer](https://www.drupal.org/project/symfony_mailer) has
+  its own HTML wrapper and policies. Magic HTML Mail runs on top of it,
+  replacing that wrapper for the modules you choose.

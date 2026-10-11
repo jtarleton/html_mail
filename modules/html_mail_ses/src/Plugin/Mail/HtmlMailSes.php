@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 #[Mail(
   id: 'html_mail_ses',
-  label: new TranslatableMarkup('HTML Mail (Amazon SES)'),
+  label: new TranslatableMarkup('Magic HTML Mail (Amazon SES)'),
   description: new TranslatableMarkup('HTML from the html_mail template plus plain text, sent through Amazon SES.'),
 )]
 class HtmlMailSes extends AmazonSes {

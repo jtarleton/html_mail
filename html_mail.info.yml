@@ -1,4 +1,4 @@
-name: 'HTML Mail'
+name: 'Magic HTML Mail'
 type: module
 description: 'Sends email as HTML from one themeable template (html-mail.html.twig), with a plain-text alternative.'
 package: Mail

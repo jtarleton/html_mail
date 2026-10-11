@@ -61,7 +61,7 @@ class SettingsFormTest extends BrowserTestBase {
     // is checked directly.
     $this->submitForm(['test_to' => 'someone@example.com'], 'Send test message');
     $this->assertSession()->pageTextContains('Test message sent to someone@example.com.');
-    $this->assertMailString('subject', 'HTML Mail test message', 1);
+    $this->assertMailString('subject', 'Magic HTML Mail test message', 1);
     $mails = $this->getMails(['id' => 'html_mail_test']);
     $this->assertCount(1, $mails);
     $html = \Drupal::service('html_mail.renderer')->build($mails[0])['html'];

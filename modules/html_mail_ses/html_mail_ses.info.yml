@@ -1,6 +1,6 @@
-name: 'HTML Mail: Amazon SES'
+name: 'Magic HTML Mail: Amazon SES'
 type: module
-description: 'Sends HTML Mail messages (HTML + plain text, List-Unsubscribe) through the Amazon SES module.'
+description: 'Sends Magic HTML Mail messages (HTML + plain text, List-Unsubscribe) through the Amazon SES module.'
 package: Mail
 core_version_requirement: ^10.3 || ^11
 dependencies:

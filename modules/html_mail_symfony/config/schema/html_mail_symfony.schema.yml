@@ -1,6 +1,6 @@
 html_mail_symfony.settings:
   type: config_object
-  label: 'HTML Mail: Symfony Mailer settings'
+  label: 'Magic HTML Mail: Symfony Mailer settings'
   mapping:
     modules:
       type: sequence

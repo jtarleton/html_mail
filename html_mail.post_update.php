@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Post update functions for HTML Mail.
+ * Post update functions for Magic HTML Mail.
  */
 
 declare(strict_types=1);

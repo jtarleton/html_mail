@@ -14,9 +14,9 @@ use Drupal\Core\Routing\RouteMatchInterface;
  */
 function html_mail_help(string $route_name, RouteMatchInterface $route_match): string {
   if ($route_name === 'help.page.html_mail' || $route_name === 'html_mail.settings') {
-    $text = '<p>' . t('HTML Mail sends email as HTML from one template, <code>html-mail.html.twig</code>, with a plain-text alternative. The settings below brand the default template; a theme can replace it entirely by overriding the template.') . '</p>';
+    $text = '<p>' . t('Magic HTML Mail sends email as HTML from one template, <code>html-mail.html.twig</code>, with a plain-text alternative. The settings below brand the default template; a theme can replace it entirely by overriding the template.') . '</p>';
     if ($route_name === 'help.page.html_mail') {
-      $text .= '<p>' . t('Enable a transport submodule too: <em>HTML Mail: Symfony Mailer</em> or <em>HTML Mail: Amazon SES</em>. See the README for the hints a sending module can add to its messages.') . '</p>';
+      $text .= '<p>' . t('Enable a transport submodule too: <em>Magic HTML Mail: Symfony Mailer</em> or <em>Magic HTML Mail: Amazon SES</em>. See the README for the hints a sending module can add to its messages.') . '</p>';
     }
     return $text;
   }
@@ -34,8 +34,8 @@ function html_mail_mail(string $key, array &$message, array $params): void {
   }
   $options = ['langcode' => $message['langcode']];
   $site = \Drupal::service('html_mail.renderer')->siteUrl();
-  $message['subject'] = t('HTML Mail test message', [], $options);
-  $message['body'][] = t('This is a test message from HTML Mail. If it shows a heading, a code and a button, HTML email works on this site.', [], $options);
+  $message['subject'] = t('Magic HTML Mail test message', [], $options);
+  $message['body'][] = t('This is a test message from Magic HTML Mail. If it shows a heading, a code and a button, HTML email works on this site.', [], $options);
   $message['body'][] = $site;
   $message['body'][] = t('The rest of a message follows the button.', [], $options);
   $message['html_mail'] = [
@@ -52,7 +52,7 @@ function html_mail_mail(string $key, array &$message, array $params): void {
         ['label' => t('Another row', [], $options), 'value' => '2', 'note' => t('with a note', [], $options)],
       ],
     ],
-    'notice' => t('You received this because someone sent a test message from the HTML Mail settings page.', [], $options),
+    'notice' => t('You received this because someone sent a test message from the Magic HTML Mail settings page.', [], $options),
   ];
 }
 

@@ -1,0 +1,5 @@
+services:
+  html_mail_symfony.mailer:
+    class: Drupal\html_mail_symfony\SymfonyMailerHtml
+    arguments: ['@config.factory', '@html_mail.renderer']
+  Drupal\html_mail_symfony\SymfonyMailerHtml: '@html_mail_symfony.mailer'

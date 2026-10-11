@@ -95,6 +95,31 @@ class HtmlMailRendererTest extends KernelTestBase {
   }
 
   /**
+   * Filters HTML hints and drops dangerous URL protocols.
+   */
+  public function testHintsAreSanitized(): void {
+    $html = $this->container->get('html_mail.renderer')->build([
+      'subject' => 'Hi',
+      'body' => ['Hello.'],
+      'html_mail' => [
+        'body' => '<p onclick="alert(1)">Kept <strong>bold</strong></p><script>alert(2)</script><img src="x" onerror="alert(3)">',
+        'footer' => '<p>Footer<iframe src="https://example.org"></iframe></p>',
+        'button' => ['label' => 'Go', 'url' => 'javascript:alert(4)'],
+        'secondary_button' => ['label' => 'More', 'url' => 'https://example.com/more'],
+        'fallback_url' => 'javascript:alert(5)',
+        'unsubscribe_url' => 'data:text/html,unsubscribe',
+      ],
+    ])['html'];
+
+    $this->assertStringContainsString('Kept <strong>bold</strong>', $html);
+    $this->assertStringContainsString('Footer', $html);
+    $this->assertStringContainsString('href="https://example.com/more"', $html);
+    foreach (['onclick', '<script', '<img src="x"', 'onerror', '<iframe', 'javascript:', 'data:text'] as $unsafe) {
+      $this->assertStringNotContainsString($unsafe, $html);
+    }
+  }
+
+  /**
    * Uses the configured site URL without its trailing slash.
    */
   public function testSiteUrl(): void {

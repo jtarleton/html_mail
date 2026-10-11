@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Post update functions for HTML Mail: Symfony Mailer.
+ * Post update functions for Magic HTML Mail: Symfony Mailer.
  */
 
 declare(strict_types=1);

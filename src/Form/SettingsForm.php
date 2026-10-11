@@ -15,7 +15,7 @@ use Drupal\html_mail\HtmlMailRenderer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * HTML Mail settings: site URL, theme, branding, and a test message.
+ * Magic HTML Mail settings: site URL, theme, branding, and a test message.
  */
 class SettingsForm extends ConfigFormBase {
 
