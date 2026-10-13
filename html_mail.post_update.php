@@ -31,3 +31,15 @@ function html_mail_post_update_branding_settings(): void {
   }
   $config->save(TRUE);
 }
+
+/**
+ * Adds the language code that the translatable settings require.
+ */
+function html_mail_post_update_settings_langcode(): void {
+  $config = \Drupal::configFactory()->getEditable('html_mail.settings');
+  if ($config->get('langcode') === NULL) {
+    $config
+      ->set('langcode', \Drupal::languageManager()->getDefaultLanguage()->getId())
+      ->save(TRUE);
+  }
+}

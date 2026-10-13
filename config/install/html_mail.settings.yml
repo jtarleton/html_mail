@@ -1,3 +1,4 @@
+langcode: en
 # Absolute base URL for links and images in emails (e.g. https://example.com).
 # Empty: the current request's scheme and host (which is "http://default" in
 # drush, so set this on sites that send mail from cron or drush).

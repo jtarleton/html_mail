@@ -46,7 +46,7 @@ class SettingsFormTest extends BrowserTestBase {
 
     $this->submitForm([
       'site_url' => 'https://example.com/',
-      'brand_name' => 'Acme',
+      'brand_name' => ' Acme ',
       'logo_url' => '/logo.png',
       'colors[accent]' => '#FF0066',
       'footer' => '<p>Sent by Acme</p>',

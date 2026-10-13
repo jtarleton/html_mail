@@ -8,3 +8,9 @@ services:
     class: Drupal\html_mail\Twig\MailStyleExtension
     tags:
       - { name: twig.extension }
+
+  # Drupal 11.1+ registers hook classes itself; this definition serves the
+  # legacy hook functions in html_mail.module on Drupal 10.3 to 11.0.
+  Drupal\html_mail\Hook\HtmlMailHooks:
+    class: Drupal\html_mail\Hook\HtmlMailHooks
+    autowire: true

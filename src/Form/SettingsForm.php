@@ -8,6 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
+use Drupal\Core\Form\ConfigTarget;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -60,8 +61,6 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    $config = $this->config('html_mail.settings');
-
     $form['site'] = [
       '#type' => 'details',
       '#title' => $this->t('Site'),
@@ -70,7 +69,11 @@ class SettingsForm extends ConfigFormBase {
     $form['site']['site_url'] = [
       '#type' => 'url',
       '#title' => $this->t('Site URL'),
-      '#default_value' => $config->get('site_url'),
+      '#config_target' => new ConfigTarget(
+        'html_mail.settings',
+        'site_url',
+        toConfig: [static::class, 'siteUrlToConfig'],
+      ),
       '#placeholder' => 'https://example.com',
       '#description' => $this->t('Absolute base URL for links and images in emails. Leave empty to use the current request, but set it if mail is sent from cron or drush, where there is no real host.'),
     ];
@@ -85,7 +88,7 @@ class SettingsForm extends ConfigFormBase {
       '#options' => $themes,
       '#empty_option' => $this->t('- Default theme -'),
       '#empty_value' => '',
-      '#default_value' => $config->get('theme') ?? '',
+      '#config_target' => 'html_mail.settings:theme',
       '#description' => $this->t('The theme whose <code>html-mail.html.twig</code> renders every email, even mail sent from admin pages, drush or cron.'),
     ];
 
@@ -98,14 +101,22 @@ class SettingsForm extends ConfigFormBase {
     $form['branding']['brand_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Name'),
-      '#default_value' => $config->get('brand_name'),
+      '#config_target' => new ConfigTarget(
+        'html_mail.settings',
+        'brand_name',
+        toConfig: [static::class, 'trimToConfig'],
+      ),
       '#placeholder' => $this->config('system.site')->get('name'),
       '#description' => $this->t('Shown in the header and footer. Leave empty to use the site name.'),
     ];
     $form['branding']['logo_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Logo'),
-      '#default_value' => $config->get('logo_url'),
+      '#config_target' => new ConfigTarget(
+        'html_mail.settings',
+        'logo_url',
+        toConfig: [static::class, 'trimToConfig'],
+      ),
       '#maxlength' => 2048,
       '#placeholder' => '/themes/custom/example/images/logo.png',
       '#description' => $this->t('An absolute URL, or a path on the site URL. Use PNG or JPEG: many email clients do not show SVG or WebP. Leave empty to show the name as text.'),
@@ -116,12 +127,22 @@ class SettingsForm extends ConfigFormBase {
       '#field_suffix' => 'px',
       '#min' => 16,
       '#max' => 600,
-      '#default_value' => $config->get('logo_width') ?: 160,
+      '#required' => TRUE,
+      '#config_target' => new ConfigTarget(
+        'html_mail.settings',
+        'logo_width',
+        toConfig: [static::class, 'intToConfig'],
+      ),
     ];
     $form['branding']['font_family'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Font stack'),
-      '#default_value' => $config->get('font_family') ?: HtmlMailRenderer::DEFAULT_FONT,
+      '#config_target' => new ConfigTarget(
+        'html_mail.settings',
+        'font_family',
+        toConfig: [static::class, 'trimToConfig'],
+      ),
+      '#placeholder' => HtmlMailRenderer::DEFAULT_FONT,
       '#maxlength' => 512,
       '#description' => $this->t('A CSS font-family list. Most email clients ignore web fonts, so end with fonts every system has.'),
     ];
@@ -137,7 +158,6 @@ class SettingsForm extends ConfigFormBase {
       'border' => $this->t('Borders'),
       'badge' => $this->t('Badge background'),
     ];
-    $colors = (array) $config->get('colors') + HtmlMailRenderer::DEFAULT_COLORS;
     $form['branding']['colors'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Colors'),
@@ -147,13 +167,21 @@ class SettingsForm extends ConfigFormBase {
       $form['branding']['colors'][$key] = [
         '#type' => 'color',
         '#title' => $label,
-        '#default_value' => $colors[$key],
+        '#config_target' => new ConfigTarget(
+          'html_mail.settings',
+          'colors.' . $key,
+          toConfig: [static::class, 'colorToConfig'],
+        ),
       ];
     }
     $form['branding']['footer'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Default footer'),
-      '#default_value' => $config->get('footer'),
+      '#config_target' => new ConfigTarget(
+        'html_mail.settings',
+        'footer',
+        toConfig: [static::class, 'trimToConfig'],
+      ),
       '#rows' => 3,
       '#description' => $this->t('HTML for the footer of messages that do not set their own, such as a postal address or why people receive email. Plain tags only.'),
     ];
@@ -190,20 +218,31 @@ class SettingsForm extends ConfigFormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Config target callback: trims a submitted string.
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->config('html_mail.settings')
-      ->set('site_url', rtrim(trim((string) $form_state->getValue('site_url')), '/'))
-      ->set('theme', (string) $form_state->getValue('theme'))
-      ->set('brand_name', trim((string) $form_state->getValue('brand_name')))
-      ->set('logo_url', trim((string) $form_state->getValue('logo_url')))
-      ->set('logo_width', (int) $form_state->getValue('logo_width'))
-      ->set('font_family', trim((string) $form_state->getValue('font_family')))
-      ->set('colors', array_map('strtolower', array_intersect_key((array) $form_state->getValue('colors'), HtmlMailRenderer::DEFAULT_COLORS)))
-      ->set('footer', trim((string) $form_state->getValue('footer')))
-      ->save();
-    parent::submitForm($form, $form_state);
+  public static function trimToConfig(mixed $value): string {
+    return trim((string) $value);
+  }
+
+  /**
+   * Config target callback: the site URL, trimmed, without a trailing slash.
+   */
+  public static function siteUrlToConfig(mixed $value): string {
+    return rtrim(trim((string) $value), '/');
+  }
+
+  /**
+   * Config target callback: a submitted number as an integer.
+   */
+  public static function intToConfig(mixed $value): int {
+    return (int) $value;
+  }
+
+  /**
+   * Config target callback: a submitted color in lowercase.
+   */
+  public static function colorToConfig(mixed $value): string {
+    return strtolower((string) $value);
   }
 
   /**

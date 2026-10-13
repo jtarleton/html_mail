@@ -99,20 +99,34 @@ class SymfonyMailerHtml {
   }
 
   /**
-   * Saves the module list from the settings form's textarea.
+   * Formats the module list for the settings form's textarea.
    *
-   * @param string $value
-   *   Machine names separated by new lines, spaces or commas; '*' for all.
+   * A #config_target fromConfig callback.
+   *
+   * @param mixed $modules
+   *   The html_mail_symfony.settings:modules value.
    */
-  public function saveModules(string $value): void {
-    $names = preg_split('/[\s,]+/', $value) ?: [];
-    $modules = array_values(array_unique(array_filter(
+  public static function modulesToText(mixed $modules): string {
+    return implode("\n", (array) $modules);
+  }
+
+  /**
+   * Parses the settings form's textarea into a module list.
+   *
+   * A #config_target toConfig callback.
+   *
+   * @param mixed $value
+   *   Machine names separated by new lines, spaces or commas; '*' for all.
+   *
+   * @return string[]
+   *   The valid, unique names.
+   */
+  public static function textToModules(mixed $value): array {
+    $names = preg_split('/[\s,]+/', (string) $value) ?: [];
+    return array_values(array_unique(array_filter(
       array_map('trim', $names),
       static fn (string $name): bool => $name === '*' || (bool) preg_match('/^[a-z0-9_]+$/', $name),
     )));
-    $this->configFactory->getEditable('html_mail_symfony.settings')
-      ->set('modules', $modules)
-      ->save();
   }
 
 }

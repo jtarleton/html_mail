@@ -3,3 +3,9 @@ services:
     class: Drupal\html_mail_symfony\SymfonyMailerHtml
     arguments: ['@config.factory', '@html_mail.renderer']
   Drupal\html_mail_symfony\SymfonyMailerHtml: '@html_mail_symfony.mailer'
+
+  # Drupal 11.1+ registers hook classes itself; this definition serves the
+  # legacy hook functions in html_mail_symfony.module on Drupal 10.3 to 11.0.
+  Drupal\html_mail_symfony\Hook\HtmlMailSymfonyHooks:
+    class: Drupal\html_mail_symfony\Hook\HtmlMailSymfonyHooks
+    autowire: true
