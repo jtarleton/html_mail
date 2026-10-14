@@ -32,3 +32,11 @@ variables:
   OPT_IN_TEST_PREVIOUS_MAJOR: '1'
   # Run those jobs automatically, not as manual jobs.
   _AUTORUN_PREVIOUS_MAJOR: 'all'
+
+# PHPStan on Drupal 10 cannot load the Drupal 11 #[Hook] / #[LegacyHook] and
+# PHPUnit 10 attribute classes. They are inert there (the .module legacy hooks
+# run instead, which phpunit (previous major) tests), so only Drupal 11 is
+# analyzed.
+phpstan (previous major):
+  rules:
+    - when: never
