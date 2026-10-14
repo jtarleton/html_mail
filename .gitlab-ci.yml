@@ -30,3 +30,5 @@ include:
 variables:
   # Run the tests on Drupal 10 too, where the legacy hook functions are used.
   OPT_IN_TEST_PREVIOUS_MAJOR: '1'
+  # Run those jobs automatically, not as manual jobs.
+  _AUTORUN_PREVIOUS_MAJOR: 'all'
