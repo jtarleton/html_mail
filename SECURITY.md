@@ -52,7 +52,7 @@ hints as untrusted:
 
 | Input | Handling |
 |---|---|
-| Plain-text body | `Html::escape()`, then line breaks become `<br>` and `http(s)` URLs become links. Each link's `href` goes through `UrlHelper::stripDangerousProtocols()` and is escaped. |
+| Message body (`$message['body']`) | Converted to plain text with core's `MailFormatHelper::htmlToText()`, the same as core's mail plugin. The HTML part is built from that text: it's escaped with `Html::escape()`, line breaks become `<br>`, and `http(s)` URLs become links. Each link's `href` goes through `UrlHelper::stripDangerousProtocols()` and gets escaped. |
 | `body` and `footer` hints (HTML) | `Xss::filter()` with a short allowlist: `p h2 h3 ul ol li strong em b i a br`. |
 | URL hints (`button.url`, `secondary_button.url`, `fallback_url`, `unsubscribe_url`) | `UrlHelper::stripDangerousProtocols()`, then Twig attribute escaping. |
 | Text hints (`heading`, `greeting`, `eyebrow`, `preheader`, `code`, `notice`, `callout.*`, button labels) | Twig autoescaping. |
@@ -61,9 +61,11 @@ hints as untrusted:
 | Symfony Mailer module list | Only machine names (`[a-z0-9_]+`) and `*` are saved. |
 
 The `|mail_style` Twig filter adds `style` attributes to tags in HTML that is
-already safe. It returns markup, so it must never receive raw user input. In
-the default template it only receives the filtered `body`, `body_after` and
-`footer`. Its CSS values are escaped with `htmlspecialchars()`.
+already safe. Anything that isn't already markup gets escaped first
+(`pre_escape`), so if a theme passes it a plain string, the string is printed
+as text. In the default template it only receives the filtered `body`,
+`body_after` and `footer`. Its CSS values are escaped with
+`htmlspecialchars()`.
 
 ### Links and the site URL
 

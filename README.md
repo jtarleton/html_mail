@@ -26,7 +26,8 @@ Drupal 10.3 or 11. A transport, through one of the submodules:
   set to replace the mail manager (in 2.x, enable its `mailer_override`
   submodule).
 - **Magic HTML Mail: Amazon SES** (`html_mail_ses`) needs
-  [Amazon SES](https://www.drupal.org/project/amazon_ses).
+  [Amazon SES](https://www.drupal.org/project/amazon_ses) 3.1 or later. The
+  2.x branch has a different mail plugin and won't work.
 
 ## Installation
 
@@ -63,6 +64,14 @@ Then pick the transport:
   `drush cset system.mail interface.mymodule html_mail_ses` (or
   `interface.default` for everything). `List-Unsubscribe` and
   `List-Unsubscribe-Post` headers set in `hook_mail()` are passed through.
+  If you uninstall `html_mail_ses`, those entries are switched back to Amazon
+  SES's own plugin (`amazon_ses_mail`), so mail keeps going out.
+
+The message body is handled like core's mail plugin handles it, as HTML
+that gets converted to plain text. So HTML-escaped token values like
+`O&#039;Brien` come out as `O'Brien`. That text is used for the plain-text
+part, and also for the HTML part unless you pass a `body` hint. Links in it
+are made clickable.
 
 All settings are in `html_mail.settings` (and `html_mail_symfony.settings`),
 so they can be exported with the rest of the site's configuration or

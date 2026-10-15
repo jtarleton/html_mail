@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for Magic HTML Mail: Amazon SES.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_uninstall().
+ *
+ * If system.mail still pointed at our plugin after uninstall, every message
+ * routed to it would throw a PluginNotFoundException. Point those entries
+ * back at the plain Amazon SES plugin instead, so mail keeps going out.
+ */
+function html_mail_ses_uninstall(bool $is_syncing): void {
+  // During a config sync, system.mail comes from the imported config, so
+  // leave it alone.
+  if ($is_syncing) {
+    return;
+  }
+  $config = \Drupal::configFactory()->getEditable('system.mail');
+  $interface = (array) $config->get('interface');
+  $routed = array_keys($interface, 'html_mail_ses', TRUE);
+  if ($routed) {
+    foreach ($routed as $key) {
+      $interface[$key] = 'amazon_ses_mail';
+    }
+    $config->set('interface', $interface)->save();
+  }
+}

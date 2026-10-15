@@ -20,8 +20,8 @@
         "drupal/core": "^10.3 || ^11"
     },
     "suggest": {
-        "drupal/symfony_mailer": "Send through Drupal Symfony Mailer (enable html_mail_symfony).",
-        "drupal/amazon_ses": "Send through Amazon SES (enable html_mail_ses)."
+        "drupal/symfony_mailer": "Send through Drupal Symfony Mailer 1.5+ (enable html_mail_symfony).",
+        "drupal/amazon_ses": "Send through Amazon SES 3.1+ (enable html_mail_ses)."
     },
     "require-dev": {
         "drupal/amazon_ses": "^3.1",

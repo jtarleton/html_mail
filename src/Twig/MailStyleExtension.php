@@ -28,7 +28,7 @@ class MailStyleExtension extends AbstractExtension {
    */
   public function getFilters(): array {
     return [
-      new TwigFilter('mail_style', [$this, 'style'], ['is_safe' => ['html']]),
+      new TwigFilter('mail_style', [$this, 'style'], ['is_safe' => ['html'], 'pre_escape' => 'html']),
     ];
   }
 

@@ -5,4 +5,4 @@ package: Mail
 core_version_requirement: ^10.3 || ^11
 dependencies:
   - html_mail:html_mail
-  - amazon_ses:amazon_ses
+  - amazon_ses:amazon_ses (>=3.1)

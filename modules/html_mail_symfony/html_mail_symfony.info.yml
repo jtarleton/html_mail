@@ -3,6 +3,7 @@ type: module
 description: 'Sends Magic HTML Mail messages (the html_mail template plus plain text) through Drupal Symfony Mailer, for sites where symfony_mailer replaces the mail manager.'
 package: Mail
 core_version_requirement: ^10.3 || ^11
+configure: html_mail.settings
 dependencies:
   - html_mail:html_mail
-  - symfony_mailer:symfony_mailer
+  - symfony_mailer:symfony_mailer (>=1.5)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\html_mail\Kernel;
 
+use Drupal\Core\Render\Markup;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\html_mail\HtmlMailRenderer;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -43,7 +44,7 @@ class HtmlMailRendererTest extends KernelTestBase {
     $built = $this->container->get('html_mail.renderer')->build([
       'subject' => 'Confirm',
       'langcode' => 'en',
-      'body' => ["Hello <there>.\n\nYour code is 987654.", $url, 'See https://example.org/help for help.'],
+      'body' => ["Hello &lt;there&gt;.\n\nYour code is 987654.", $url, 'See https://example.org/help for help.'],
       'html_mail' => [
         'heading' => 'Confirm your email',
         'code' => '987654',
@@ -55,6 +56,7 @@ class HtmlMailRendererTest extends KernelTestBase {
     $this->assertStringContainsString('Confirm your email', $html);
     $this->assertStringContainsString('987654', $html);
     $this->assertStringContainsString('Hello &lt;there&gt;.', $html);
+    $this->assertStringContainsString('Hello <there>.', $built['text']);
     $this->assertStringContainsString('href="https://example.org/help">https://example.org/help</a>', $html);
     $this->assertStringContainsString('href="https://example.com"', $html);
     $this->assertStringContainsString('Example Site', $html);
@@ -66,6 +68,54 @@ class HtmlMailRendererTest extends KernelTestBase {
     $this->assertStringContainsString('Your code is 987654.', $built['text']);
     $this->assertStringContainsString($url, $built['text']);
     $this->assertStringContainsString('#0b5cad', $html);
+  }
+
+  /**
+   * The body is handled as HTML, the same way core's mail plugin does it.
+   */
+  public function testBodyIsReadAsHtml(): void {
+    $long = str_repeat('A long sentence that the plain text wraps. ', 4);
+    $built = $this->container->get('html_mail.renderer')->build([
+      'subject' => 'Hi',
+      'body' => [
+        // What user_mail() produces: token values are HTML-escaped.
+        "Welcome to O&#039;Brien Dental.\n\n" . $long,
+        'See &lt;https://example.com/a?b=1&amp;c=2&gt; for help.',
+        // What the contact module produces: rendered markup.
+        Markup::create("<div><div>Message</div>\n<div>Hello <strong>there</strong></div></div>"),
+      ],
+    ]);
+    $html = $built['html'];
+    $text = $built['text'];
+
+    $this->assertStringContainsString("Welcome to O'Brien Dental.", $text);
+    $this->assertStringContainsString('Welcome to O&#039;Brien Dental.', $html);
+    $this->assertStringNotContainsString('&amp;#039;', $html);
+    $this->assertStringNotContainsString('&#039;', $text);
+    // Tags get converted, not printed literally.
+    $this->assertStringContainsString('*there*', $text);
+    $this->assertStringNotContainsString('<div>', $text);
+    $this->assertStringNotContainsString('&lt;div', $html);
+    $this->assertStringNotContainsString('&lt;strong', $html);
+    // Lines wrapped in the text version are joined back up in the HTML.
+    $this->assertStringContainsString(trim($long), $html);
+    // The link shouldn't swallow the escaped closing bracket.
+    $this->assertStringContainsString('See &lt;<a style="color:#0b5cad;" href="https://example.com/a?b=1&amp;c=2">https://example.com/a?b=1&amp;c=2</a>&gt; for help.', $html);
+    // The preview text is escaped only once, and paragraphs are separated
+    // by a space.
+    $this->assertMatchesRegularExpression('#display:none[^>]*>Welcome to O&\#039;Brien Dental\. A long sentence#', $html);
+  }
+
+  /**
+   * The mail_style filter escapes plain strings before styling them.
+   */
+  public function testMailStyleEscapesStrings(): void {
+    $twig = $this->container->get('twig');
+    $template = "{{ value|mail_style({p: 'margin:0;'}) }}";
+    $plain = (string) $twig->createTemplate($template)->render(['value' => '<p>Hi</p>']);
+    $this->assertSame('&lt;p&gt;Hi&lt;/p&gt;', $plain);
+    $markup = (string) $twig->createTemplate($template)->render(['value' => Markup::create('<p>Hi</p>')]);
+    $this->assertSame('<p style="margin:0;">Hi</p>', $markup);
   }
 
   /**

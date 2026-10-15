@@ -22,10 +22,16 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Builds the HTML and plain-text versions of an outgoing message.
  *
  * A sending module needs nothing from this module: its hook_mail() writes the
- * plain-text body as usual and may add hints under $message['html_mail'] (or
+ * body as usual and may add hints under $message['html_mail'] (or
  * $params['html_mail']): heading, code, button, callout, notice, footer...
- * (the variables of the html_mail theme hook). Without hints, the plain-text
- * body becomes the HTML body, paragraph by paragraph, with links made
+ * (the variables of the html_mail theme hook).
+ *
+ * Body lines are treated the same way core's PhpMail treats them, i.e. as
+ * HTML. That matters because token values come in HTML-escaped, and modules
+ * like contact put rendered markup in the body. We run the body through
+ * MailFormatHelper::htmlToText() just like core does and use the result as
+ * the plain-text part. Unless there's a 'body' hint, the HTML version is
+ * built from that same text, one <p> per paragraph, with links made
  * clickable.
  *
  * The template is rendered in the theme set in html_mail.settings:theme (the
@@ -140,8 +146,9 @@ class HtmlMailRenderer {
    */
   public function build(array $message): array {
     $hints = ($message['html_mail'] ?? []) + ($message['params']['html_mail'] ?? []);
-    $paragraphs = $this->paragraphs($message['body'] ?? []);
-    $text = MailFormatHelper::wrapMail(implode("\n\n", $paragraphs));
+    $body = $message['body'] ?? [];
+    $text = MailFormatHelper::htmlToText(implode("\n\n", array_map('strval', is_array($body) ? $body : [$body])));
+    $paragraphs = $this->paragraphs($text);
 
     $variables = [
       'subject' => (string) ($message['subject'] ?? ''),
@@ -199,13 +206,13 @@ class HtmlMailRenderer {
           || (!empty($variables['code']) && str_contains($trimmed, $variables['code']))) {
           continue;
         }
-        $html[$part] .= '<p>' . $this->linkify(nl2br(Html::escape($trimmed), FALSE)) . '</p>';
+        $html[$part] .= '<p>' . nl2br($this->linkify($trimmed), FALSE) . '</p>';
       }
       $variables['body'] = Markup::create($html[0]);
       $variables['body_after'] = Markup::create($html[1]);
     }
     if (empty($variables['preheader'])) {
-      $variables['preheader'] = mb_substr(trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $variables['body']))), 0, 140);
+      $variables['preheader'] = $this->preheader((string) $variables['body']);
     }
 
     $build = ['#theme' => 'html_mail'];
@@ -216,29 +223,51 @@ class HtmlMailRenderer {
   }
 
   /**
-   * The body as a list of plain-text paragraphs.
+   * Splits the plain-text body into paragraphs.
+   *
+   * @param string $text
+   *   Output from MailFormatHelper::htmlToText(). It's wrapped using
+   *   format=flowed, where a trailing space means the line continues on the
+   *   next one. We join those back up, but leave the "-- " signature marker
+   *   alone.
    */
-  protected function paragraphs(mixed $body): array {
-    $body = is_array($body) ? $body : [$body];
+  protected function paragraphs(string $text): array {
+    $text = (string) preg_replace('/(?<!^--) +\n/m', ' ', str_replace("\r\n", "\n", $text));
     $out = [];
-    foreach ($body as $part) {
-      foreach (preg_split('/\n\s*\n/', str_replace("\r\n", "\n", (string) $part)) ?: [] as $paragraph) {
-        if (trim($paragraph) !== '') {
-          $out[] = rtrim($paragraph);
-        }
+    foreach (preg_split('/\n\s*\n/', $text) ?: [] as $paragraph) {
+      if (trim($paragraph) !== '') {
+        $out[] = rtrim($paragraph);
       }
     }
     return $out;
   }
 
   /**
-   * Makes the http(s) URLs in escaped text clickable.
+   * Escapes plain text and turns http(s) URLs into links.
+   *
+   * This works on the raw text and escapes afterwards. Matching URLs in
+   * already-escaped text would pull entities like &gt; into the link.
    */
-  protected function linkify(string $escaped): string {
-    return (string) preg_replace_callback('#\bhttps?://[^\s<]+[^\s<.,;:!?)\]\'"]#u', static function (array $m): string {
-      $url = Html::decodeEntities($m[0]);
-      return '<a href="' . Html::escape(UrlHelper::stripDangerousProtocols($url)) . '">' . $m[0] . '</a>';
-    }, $escaped);
+  protected function linkify(string $text): string {
+    $parts = preg_split('#(\bhttps?://[^\s<>"]*[^\s<>".,;:!?)\]\'])#u', $text, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$text];
+    $html = '';
+    foreach ($parts as $i => $part) {
+      $escaped = Html::escape($part);
+      $html .= $i % 2 ? '<a href="' . Html::escape(UrlHelper::stripDangerousProtocols($part)) . '">' . $escaped . '</a>' : $escaped;
+    }
+    return $html;
+  }
+
+  /**
+   * Builds the inbox preview text from the start of the body.
+   *
+   * Twig escapes this when printing it, so entities are decoded here to avoid
+   * double escaping. Tags get a space in front so paragraphs don't run
+   * together once they're stripped.
+   */
+  protected function preheader(string $html): string {
+    $text = Html::decodeEntities(strip_tags(str_replace('<', ' <', $html)));
+    return mb_substr(trim((string) preg_replace('/\s+/u', ' ', $text)), 0, 140);
   }
 
   /**

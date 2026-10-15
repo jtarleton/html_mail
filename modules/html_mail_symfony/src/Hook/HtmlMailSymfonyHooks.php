@@ -26,6 +26,9 @@ class HtmlMailSymfonyHooks {
 
   /**
    * Implements hook_mail_alter().
+   *
+   * We hold on to a reference rather than a copy, so changes made by other
+   * modules' alter hooks that run after ours aren't lost.
    */
   #[Hook('mail_alter')]
   public function mailAlter(array &$message): void {
